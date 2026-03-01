@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="display:flex; align-items:center; justify-content:space-between; height:100vh; padding:0 100px;">
+
+    <!-- LEFT SIDE -->
+    <div>
+        <h1 style="font-size:60px;">🎤 Smart Anchor Performance Analyzer</h1>
+        <p style="font-size:18px; margin-top:20px;">
+            AI-powered system to evaluate anchor facial emotion and voice confidence.
+        </p>
+
+        <a href="/analyze">
+            <button style="margin-top:30px;">Start Analysis</button>
+        </a>
+    </div>
+
+    <!-- RIGHT SIDE IMAGE -->
+    <div>
+        <img src="{{ url_for('static', filename='images/Anchor_img.png') }}" 
+     style="width:400px; opacity:0.15; filter:brightness(0);">
+    </div>
+
+</div>
+
+{% endblock %}

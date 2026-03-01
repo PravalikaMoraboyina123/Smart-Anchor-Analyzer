@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>🎥 Upload Video for Analysis</h2>
+
+    <form id="analysisForm" action="/process" method="post" enctype="multipart/form-data">
+        <input type="file" name="video" required>
+        <br><br>
+        <button type="submit">Analyze</button>
+    </form>
+</div>
+
+<!-- Loading Section -->
+<div id="loadingSection" style="display:none; margin-top:30px;">
+    <h3>🔍 Analyzing Performance...</h3>
+    <p>Please wait while evaluating facial emotions and voice confidence.</p>
+</div>
+
+<!-- RESULT SECTION -->
+{% if result %}
+<div class="card">
+    <h3>😊 Face Score: {{ result.face_score }}</h3>
+    <h3>🎤 Voice Confidence: {{ result.voice_conf }}</h3>
+    <h3>💬 Sentiment Score: {{ result.sentiment }}</h3>
+    <h2>🔥 Final Score: {{ result.final_score }}</h2>
+</div>
+
+<div class="card">
+    <a href="/analytics">
+        <button>View Analytics Dashboard</button>
+    </a>
+</div>
+{% endif %}
+
+<script>
+document.getElementById("analysisForm").addEventListener("submit", function() {
+    document.getElementById("loadingSection").style.display = "block";
+});
+</script>
+
+{% endblock %}

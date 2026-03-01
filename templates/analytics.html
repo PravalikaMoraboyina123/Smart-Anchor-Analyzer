@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card analytics-header">
+    <h1>📊 Analytics Dashboard</h1>
+</div>
+
+<div class="charts-container">
+
+    <div class="card chart-card">
+        <canvas id="emotionChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+        <canvas id="performanceChart"></canvas>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const emotionLabels = {{ data.emotions.keys() | list | tojson }};
+const emotionValues = {{ data.emotions.values() | list | tojson }};
+
+const faceScore = {{ data.face_score | tojson }};
+const voiceConf = {{ data.voice_conf | tojson }};
+const sentimentScore = {{ (data.sentiment * 20) | tojson }};
+
+
+// ================= EMOTION BAR CHART =================
+
+new Chart(document.getElementById('emotionChart'), {
+    type: 'bar',
+    data: {
+        labels: emotionLabels,
+        datasets: [{
+            label: "Emotion Distribution",
+            data: emotionValues,
+            backgroundColor: [
+                "#00C9FF",
+                "#00FF99",
+                "#FFD700",
+                "#FF6B6B",
+                "#A29BFE",
+                "#FF9F43",
+                "#B2BEC3"
+            ],
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: "rgba(255,255,255,0.1)" },
+                ticks: { color: "#ffffff" }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: "#ffffff" }
+            }
+        }
+    }
+});
+
+
+// ================= PERFORMANCE BAR CHART =================
+
+new Chart(document.getElementById('performanceChart'), {
+    type: 'bar',
+    data: {
+        labels: ["Face Score", "Voice Confidence", "Sentiment Score"],
+        datasets: [{
+            label: "Performance Metrics",
+            data: [faceScore, voiceConf, sentimentScore],
+            backgroundColor: [
+                "#00E5FF",
+                "#9C27B0",
+                "#00FF99"
+            ],
+            borderRadius: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                grid: { color: "rgba(255,255,255,0.1)" },
+                ticks: { color: "#ffffff" }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: "#ffffff" }
+            }
+        }
+    }
+});
+
+</script>
+
+{% endblock %}

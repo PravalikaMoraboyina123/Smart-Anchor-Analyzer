@@ -1,0 +1,282 @@
+/* ============================= */
+/* GLOBAL STYLES */
+/* ============================= */
+
+/* ============================= */
+/* ANIMATED BACKGROUND */
+/* ============================= */
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    color: white;
+
+    background: linear-gradient(
+        -45deg,
+        #0f2027,
+        #203a43,
+        #2c5364,
+        #1c3b47
+    );
+
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
+}
+
+/* Smooth background movement */
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ============================= */
+/* NAVBAR */
+/* ============================= */
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.nav-links a {
+    color: #00ffff;
+    text-decoration: none;
+    margin-left: 25px;
+    font-weight: 500;
+    transition: 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ff00ff;
+    transform: scale(1.1);
+}
+
+/* ============================= */
+/* CONTAINER */
+/* ============================= */
+
+.container {
+    padding: 50px;
+}
+
+/* ============================= */
+/* CARD DESIGN */
+/* ============================= */
+
+.card {
+    background: rgba(255,255,255,0.08);
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 25px rgba(0,255,255,0.3);
+    transition: 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 35px rgba(0,255,255,0.5);
+}
+
+/* ============================= */
+/* BUTTON STYLE */
+/* ============================= */
+
+button {
+    padding: 12px 25px;
+    background: linear-gradient(45deg, #00ffff, #00ff99);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: 0.3s ease;
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #ff00ff, #00ffff);
+}
+
+/* ============================= */
+/* FILE INPUT */
+/* ============================= */
+
+input[type="file"] {
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: white;
+    border: none;
+}
+
+/* ============================= */
+/* HOME HERO SECTION */
+/* ============================= */
+
+.hero-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 80px 120px;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-text h1 {
+    font-size: 60px;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.hero-text p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    max-width: 500px;
+    opacity: 0.9;
+}
+
+.hero-image {
+    flex: 1;
+    text-align: right;
+}
+
+.hero-image img {
+    width: 400px;
+    opacity: 0.15;
+    filter: brightness(0);
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+/* ============================= */
+/* ANALYZE RESULTS GRID */
+/* ============================= */
+
+.score-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.score-box {
+    background: rgba(255,255,255,0.08);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,255,255,0.3);
+}
+
+.score-box p {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* ============================= */
+/* CHARTS SECTION */
+/* ============================= */
+
+.charts-container {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.chart-card {
+    width: 480px;
+    height: 380px;
+    padding: 20px;
+}
+
+/* ============================= */
+/* HISTORY PAGE */
+/* ============================= */
+
+.history-item {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 900px) {
+
+    .hero-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .hero-image {
+        text-align: center;
+        margin-top: 40px;
+    }
+
+    .charts-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chart-card {
+        width: 90%;
+        height: auto;
+    }
+
+    .navbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+/* ============================= */
+/* FLOATING GLOW EFFECT */
+/* ============================= */
+
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: rgba(0, 255, 255, 0.08);
+    filter: blur(120px);
+    z-index: -1;
+    animation: floatGlow 15s infinite alternate ease-in-out;
+}
+
+body::before {
+    top: -150px;
+    left: -150px;
+}
+
+body::after {
+    bottom: -150px;
+    right: -150px;
+}
+
+@keyframes floatGlow {
+    0% {
+        transform: translate(0px, 0px);
+    }
+    100% {
+        transform: translate(80px, 60px);
+    }
+}
