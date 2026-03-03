@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 uploads/
 audio.wav
+*.mp4
+uploads/
+dataset/
+audio.wav
+train_emotion_model.py
