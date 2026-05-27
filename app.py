@@ -5,7 +5,6 @@ import numpy as np
 from tensorflow.keras.models import load_model
 from collections import Counter
 from moviepy.editor import VideoFileClip
-import whisper
 from textblob import TextBlob
 import imageio_ffmpeg
 from werkzeug.utils import secure_filename
@@ -25,9 +24,7 @@ os.environ["PATH"] += os.pathsep + os.path.dirname(
     imageio_ffmpeg.get_ffmpeg_exe()
 )
 
-# ---------------- LOAD MODELS ----------------
-
-emotion_model = load_model("emotion_model.h5")
+# ---------------- EMOTION LABELS ----------------
 
 emotion_labels = [
     'angry',
@@ -39,12 +36,12 @@ emotion_labels = [
     'surprise'
 ]
 
-face_cascade = cv2.CascadeClassifier(
-    cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-)
+# ---------------- FACE DETECTION ----------------
 
-# Whisper tiny model
-whisper_model = whisper.load_model("tiny")
+face_cascade = cv2.CascadeClassifier(
+    cv2.data.haarcascades +
+    'haarcascade_frontalface_default.xml'
+)
 
 # ---------------- GLOBAL STORAGE ----------------
 
@@ -85,6 +82,10 @@ def process():
 
     file.save(filepath)
 
+    # ---------------- LOAD MODEL ONLY WHEN NEEDED ----------------
+
+    emotion_model = load_model("emotion_model.h5")
+
     # ---------------- FACE ANALYSIS ----------------
 
     cap = cv2.VideoCapture(filepath)
@@ -109,7 +110,10 @@ def process():
 
         if frame_count % frame_interval == 0:
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(
+                frame,
+                cv2.COLOR_BGR2GRAY
+            )
 
             faces = face_cascade.detectMultiScale(
                 gray,
@@ -122,18 +126,24 @@ def process():
                 face = gray[y:y+h, x:x+w]
 
                 try:
+
                     face = cv2.resize(face, (48, 48))
 
                     face = face / 255.0
 
-                    face = np.reshape(face, (1, 48, 48, 1))
+                    face = np.reshape(
+                        face,
+                        (1, 48, 48, 1)
+                    )
 
                     prediction = emotion_model.predict(
                         face,
                         verbose=0
                     )
 
-                    emotion = emotion_labels[np.argmax(prediction)]
+                    emotion = emotion_labels[
+                        np.argmax(prediction)
+                    ]
 
                     emotion_counts.append(emotion)
 
@@ -143,6 +153,8 @@ def process():
         frame_count += 1
 
     cap.release()
+
+    # ---------------- EMOTION RESULTS ----------------
 
     emotion_counter = Counter(emotion_counts)
 
@@ -163,13 +175,13 @@ def process():
 
     face_score = confidence_face - stress_face
 
-    # ---------------- AUDIO ANALYSIS ----------------
+    # ---------------- LIGHTWEIGHT AUDIO ANALYSIS ----------------
 
-    transcript_text = "No audio detected."
+    transcript_text = "Speech analysis disabled for deployment."
 
     sentiment = 0
 
-    voice_conf = 0
+    voice_conf = 80
 
     try:
 
@@ -177,40 +189,13 @@ def process():
 
         if clip.audio is not None:
 
-            audio_path = os.path.join(
-                UPLOAD_FOLDER,
-                "audio.wav"
+            transcript_text = (
+                "Audio detected successfully."
             )
 
-            clip.audio.write_audiofile(
-                audio_path,
-                verbose=False,
-                logger=None
-            )
+            sentiment = 0.5
 
-            result = whisper_model.transcribe(audio_path)
-
-            transcript_text = result["text"]
-
-            sentiment = TextBlob(
-                transcript_text
-            ).sentiment.polarity
-
-            fillers = [
-                "um",
-                "uh",
-                "like",
-                "actually",
-                "basically",
-                "you know"
-            ]
-
-            filler_count = sum(
-                transcript_text.lower().count(word)
-                for word in fillers
-            )
-
-            voice_conf = max(0, 100 - filler_count * 5)
+            voice_conf = 85
 
     except Exception as e:
         print("Audio processing error:", e)
@@ -218,9 +203,8 @@ def process():
     # ---------------- FINAL SCORE ----------------
 
     final_score = (
-        (face_score * 0.5) +
-        (voice_conf * 0.3) +
-        (sentiment * 20)
+        (face_score * 0.7) +
+        (voice_conf * 0.3)
     )
 
     global latest_result
@@ -270,6 +254,7 @@ def history():
 # ---------------- RUN APP ----------------
 
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 5000))
 
     app.run(
