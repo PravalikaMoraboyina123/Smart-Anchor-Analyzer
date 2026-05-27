@@ -8,6 +8,5 @@ moviepy==1.0.3
 decorator==4.4.2
 imageio
 imageio-ffmpeg
-openai-whisper
 textblob
 scikit-learn
