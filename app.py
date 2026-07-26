@@ -160,24 +160,33 @@ def process():
         emotion_counts = []
         frame_count = 0
         processed_frames = 0
-        MAX_FRAMES_TO_PROCESS = 60  # Cap processing to prevent cloud timeout
+        MAX_FRAMES_TO_PROCESS = 30  # Cap processing to 30 frames max (1 frame/sec) for cloud speed
 
         while True:
             ret, frame = cap.read()
-            if not ret or processed_frames >= MAX_FRAMES_TO_PROCESS:
+            if not ret or processed_frames >= MAX_FRAMES_TO_PROCESS or frame_count > (MAX_FRAMES_TO_PROCESS * fps):
                 break
 
             if frame_count % frame_interval == 0:
                 try:
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    # Downscale large frames to 480px width for 8x faster face detection
+                    h, w = frame.shape[:2]
+                    if w > 480:
+                        scale = 480.0 / w
+                        proc_frame = cv2.resize(frame, (480, int(h * scale)))
+                    else:
+                        proc_frame = frame
+
+                    gray = cv2.cvtColor(proc_frame, cv2.COLOR_BGR2GRAY)
                     faces = face_cascade.detectMultiScale(
                         gray,
                         scaleFactor=1.1,
-                        minNeighbors=4
+                        minNeighbors=4,
+                        minSize=(30, 30)
                     )
 
-                    for (x, y, w, h) in faces:
-                        face = gray[y:y+h, x:x+w]
+                    for (x, y, w_box, h_box) in faces:
+                        face = gray[y:y+h_box, x:x+w_box]
                         try:
                             face = cv2.resize(face, (48, 48))
                             face = face / 255.0
