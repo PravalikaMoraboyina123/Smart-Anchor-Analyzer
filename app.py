@@ -301,6 +301,16 @@ def history():
         history=history_data
     )
 
+# ---------------- ERROR HANDLERS ----------------
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('analyze.html', error="Requested page not found. Please upload a video to start analysis."), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('analyze.html', error="An unexpected server issue occurred. Please try uploading a short MP4 video."), 500
+
 # ---------------- RUN APP ----------------
 
 if __name__ == "__main__":
