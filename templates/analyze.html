@@ -4,12 +4,19 @@
 <div class="card">
     <h2>🎥 Upload Video for Analysis</h2>
 
+    {% if error %}
+    <div style="background-color: #ffebee; border-left: 5px solid #ef5350; color: #c62828; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        <p style="margin:0;">⚠️ <strong>Error:</strong> {{ error }}</p>
+    </div>
+    {% endif %}
+
     <form id="analysisForm" action="/process" method="post" enctype="multipart/form-data">
         <input type="file" name="video" required>
         <br><br>
         <button type="submit">Analyze</button>
     </form>
 </div>
+
 
 <!-- Loading Section -->
 <div id="loadingSection" style="display:none; margin-top:30px;">

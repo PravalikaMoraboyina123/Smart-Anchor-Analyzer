@@ -75,8 +75,10 @@ def analyze_page():
 
 # ---------------- PROCESS VIDEO ----------------
 
-@app.route('/process', methods=['POST'])
+@app.route('/process', methods=['GET', 'POST'])
 def process():
+    if request.method == 'GET':
+        return redirect(url_for('analyze_page'))
 
     if 'video' not in request.files:
         return redirect(url_for('analyze_page'))
@@ -102,7 +104,7 @@ def process():
         # ---------------- FACE ANALYSIS ----------------
         cap = cv2.VideoCapture(filepath)
         fps = int(cap.get(cv2.CAP_PROP_FPS))
-        if fps == 0:
+        if fps <= 0:
             fps = 1
 
         frame_interval = fps
@@ -117,25 +119,28 @@ def process():
                 break
 
             if frame_count % frame_interval == 0:
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = face_cascade.detectMultiScale(
-                    gray,
-                    scaleFactor=1.1,
-                    minNeighbors=4
-                )
+                try:
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = face_cascade.detectMultiScale(
+                        gray,
+                        scaleFactor=1.1,
+                        minNeighbors=4
+                    )
 
-                for (x, y, w, h) in faces:
-                    face = gray[y:y+h, x:x+w]
-                    try:
-                        face = cv2.resize(face, (48, 48))
-                        face = face / 255.0
-                        face = np.reshape(face, (1, 48, 48, 1))
+                    for (x, y, w, h) in faces:
+                        face = gray[y:y+h, x:x+w]
+                        try:
+                            face = cv2.resize(face, (48, 48))
+                            face = face / 255.0
+                            face = np.reshape(face, (1, 48, 48, 1))
 
-                        prediction = model.predict(face, verbose=0)
-                        emotion = emotion_labels[np.argmax(prediction)]
-                        emotion_counts.append(emotion)
-                    except Exception:
-                        continue
+                            prediction = model.predict(face, verbose=0)
+                            emotion = emotion_labels[np.argmax(prediction)]
+                            emotion_counts.append(emotion)
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
 
                 processed_frames += 1
 
@@ -194,6 +199,18 @@ def process():
             "score": round(final_score, 2)
         })
 
+        return render_template(
+            "analyze.html",
+            result=latest_result
+        )
+
+    except Exception as err:
+        print("Error during video processing:", err)
+        return render_template(
+            "analyze.html",
+            error=f"Video processing encountered an issue: {str(err)}. Please try uploading a short MP4 file."
+        )
+
     finally:
         # Clean up temporary uploaded file to prevent disk exhaustion
         if os.path.exists(filepath):
@@ -202,10 +219,6 @@ def process():
             except Exception:
                 pass
 
-    return render_template(
-        "analyze.html",
-        result=latest_result
-    )
 
 # ---------------- ANALYTICS PAGE ----------------
 
