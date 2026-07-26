@@ -3,8 +3,14 @@ import os
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+from tensorflow.keras import layers, models
 from collections import Counter
-from moviepy.editor import VideoFileClip
+
+try:
+    from moviepy.editor import VideoFileClip
+except ImportError:
+    from moviepy import VideoFileClip
+
 from textblob import TextBlob
 import imageio_ffmpeg
 from werkzeug.utils import secure_filename
@@ -53,8 +59,30 @@ emotion_model = None
 def get_emotion_model():
     global emotion_model
     if emotion_model is None:
-        emotion_model = load_model("emotion_model.h5")
+        model_file = "emotion_model.keras" if os.path.exists("emotion_model.keras") else "emotion_model.h5"
+        try:
+            emotion_model = load_model(model_file, compile=False)
+        except Exception as err:
+            print("Model load warning, reconstructing model architecture:", err)
+            # Reconstruct architecture and load weights for legacy compatibility
+            m = models.Sequential([
+                layers.Input(shape=(48, 48, 1)),
+                layers.Conv2D(32, (3, 3), activation='relu'),
+                layers.MaxPooling2D(2, 2),
+                layers.Conv2D(64, (3, 3), activation='relu'),
+                layers.MaxPooling2D(2, 2),
+                layers.Conv2D(128, (3, 3), activation='relu'),
+                layers.MaxPooling2D(2, 2),
+                layers.Flatten(),
+                layers.Dense(128, activation='relu'),
+                layers.Dropout(0.5),
+                layers.Dense(7, activation='softmax')
+            ])
+            weights_file = "emotion_model.h5" if os.path.exists("emotion_model.h5") else "emotion_model.keras"
+            m.load_weights(weights_file)
+            emotion_model = m
     return emotion_model
+
 
 # ---------------- GLOBAL STORAGE ----------------
 

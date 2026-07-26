@@ -1,7 +1,11 @@
 import whisper
-from moviepy.editor import VideoFileClip
+try:
+    from moviepy.editor import VideoFileClip
+except ImportError:
+    from moviepy import VideoFileClip
 from textblob import TextBlob
 import os
+
 
 # ==============================
 # EXTRACT AUDIO FROM VIDEO

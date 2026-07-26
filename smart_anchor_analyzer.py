@@ -2,8 +2,14 @@ import os
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+from tensorflow.keras import layers, models
 from collections import Counter
-from moviepy.editor import VideoFileClip
+
+try:
+    from moviepy.editor import VideoFileClip
+except ImportError:
+    from moviepy import VideoFileClip
+
 import whisper
 from textblob import TextBlob
 import imageio_ffmpeg
@@ -11,13 +17,36 @@ import imageio_ffmpeg
 # ===============================
 # FIX FFMPEG (No PATH Needed)
 # ===============================
-os.environ["PATH"] += os.pathsep + os.path.dirname(imageio_ffmpeg.get_ffmpeg_exe())
+try:
+    os.environ["PATH"] += os.pathsep + os.path.dirname(imageio_ffmpeg.get_ffmpeg_exe())
+except Exception:
+    pass
 
 # ===============================
 # LOAD EMOTION MODEL
 # ===============================
 print("Loading emotion model...")
-emotion_model = load_model("emotion_model.h5")
+model_file = "emotion_model.keras" if os.path.exists("emotion_model.keras") else "emotion_model.h5"
+try:
+    emotion_model = load_model(model_file, compile=False)
+except Exception:
+    m = models.Sequential([
+        layers.Input(shape=(48, 48, 1)),
+        layers.Conv2D(32, (3, 3), activation='relu'),
+        layers.MaxPooling2D(2, 2),
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.MaxPooling2D(2, 2),
+        layers.Conv2D(128, (3, 3), activation='relu'),
+        layers.MaxPooling2D(2, 2),
+        layers.Flatten(),
+        layers.Dense(128, activation='relu'),
+        layers.Dropout(0.5),
+        layers.Dense(7, activation='softmax')
+    ])
+    weights_file = "emotion_model.h5" if os.path.exists("emotion_model.h5") else "emotion_model.keras"
+    m.load_weights(weights_file)
+    emotion_model = m
+
 
 emotion_labels = ['angry', 'disgust', 'fear',
                   'happy', 'neutral', 'sad', 'surprise']
