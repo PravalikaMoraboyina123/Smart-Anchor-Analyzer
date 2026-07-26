@@ -1,280 +1,260 @@
-# Smart Anchor Analyzer
+# 🎥 Smart Anchor Analyzer
 
-Smart Anchor Analyzer is an AI-powered facial emotion and communication analysis system developed using Flask, OpenCV, TensorFlow, and Machine Learning techniques. The application analyzes uploaded video files to detect facial emotions, evaluate confidence levels, and generate presentation analytics through computer vision and intelligent processing.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Framework-Flask-black.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![TensorFlow](https://img.shields.io/badge/AI-TensorFlow%20%7C%20Keras-FF6F00.svg?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/)
+[![OpenCV](https://img.shields.io/badge/Vision-OpenCV-5C3EE8.svg?logo=opencv&logoColor=white)](https://opencv.org/)
+[![Render](https://img.shields.io/badge/Deployment-Render-46E3B7.svg?logo=render&logoColor=white)](https://smart-anchor-analyzer.onrender.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-The project focuses on Artificial Intelligence, Computer Vision, Emotion Detection, and Web Application Development. It provides an interactive platform where users can upload videos and receive analytical insights related to facial emotions and communication behavior.
-
----
-
-## Live Demo
-
-Website: https://smart-anchor-analyzer.onrender.com/
-
----
-
-## GitHub Repository
-
-Repository Link:  
-https://github.com/PravalikaMoraboyina123/Smart-Anchor-Analyzer
+An intelligent, AI-driven facial emotion and communication analysis system built with **Flask**, **OpenCV**, **TensorFlow/Keras**, and **Natural Language Processing**. **Smart Anchor Analyzer** evaluates news anchors, public speakers, presenters, and interviewees by processing video recordings to measure facial expressions, stress metrics, speech sentiment, and overall presentation confidence.
 
 ---
 
-## Features
+## 🚀 Live Demo & Links
 
-- Video upload and analysis system
-- Facial emotion detection using Deep Learning
-- Real-time frame processing
-- Emotion classification and analytics
-- Confidence and stress score calculation
-- Interactive analytics dashboard
-- History tracking system
-- Professional Flask web application
-- Responsive UI design
-- Machine Learning-based prediction system
-- Cloud deployment using Render
+- **🌐 Live Application:** [https://smart-anchor-analyzer.onrender.com/](https://smart-anchor-analyzer.onrender.com/)
+- **📦 GitHub Repository:** [https://github.com/PravalikaMoraboyina123/Smart-Anchor-Analyzer](https://github.com/PravalikaMoraboyina123/Smart-Anchor-Analyzer)
 
 ---
 
-## Technologies Used
+## 📌 Table of Contents
 
-### Programming Language
-- Python
-
-### Frameworks & Libraries
-- Flask
-- OpenCV
-- TensorFlow
-- Keras
-- NumPy
-- MoviePy
-- TextBlob
-- Scikit-learn
-- ImageIO
-- Gunicorn
-
-### Machine Learning & AI
-- Deep Learning
-- Facial Emotion Recognition
-- Computer Vision
-- Classification Models
-- Image Processing
-
-### Development Tools
-- VS Code
-- GitHub
-- Render
-- Jupyter Notebook
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [System Architecture](#-system-architecture)
+- [Emotion Categories & Analytics Logic](#-emotion-categories--analytics-logic)
+- [Technology Stack](#-technology-stack)
+- [Project Directory Structure](#-project-directory-structure)
+- [Installation & Setup](#-installation--setup)
+- [Usage Guide](#-usage-guide)
+- [Deployment Configuration](#-deployment-configuration)
+- [Performance & Optimization](#-performance--optimization)
+- [Future Roadmap](#-future-roadmap)
+- [Author & Contact](#-author--contact)
+- [License](#-license)
 
 ---
 
-## Project Structure
+## 🔍 Overview
 
-```bash
+Delivering a strong presentation or news broadcast requires high emotional stability, confidence, and positive delivery. **Smart Anchor Analyzer** automates the assessment of speaker performance using Computer Vision and Deep Learning.
+
+By ingesting video files, the system extracts facial frames at calculated intervals, detects expressions via a custom Convolutional Neural Network (CNN), inspects speech elements, and yields actionable insights—including a consolidated **Performance Score**.
+
+---
+
+## ✨ Key Features
+
+- 🎭 **Facial Emotion Recognition:** Real-time and frame-by-frame emotion detection across 7 expression classes using a trained Deep Learning (Keras/TensorFlow) model.
+- 📐 **Automated Face Detection:** Utilizes OpenCV's Haar Cascade classifier to locate, isolate, and crop facial regions for analysis.
+- 📊 **Multimodal Performance Scoring:** Combines facial confidence, stress deductions, and speech sentiment to compute an overall speaker performance metric.
+- 📈 **Interactive Analytics Dashboard:** Visual summaries showing facial expression distribution, confidence index, and stress indicators.
+- 📜 **Historical Tracking:** Keeps track of processed video uploads and performance ratings within the active session history.
+- ⚡ **Optimized Cloud Deployment:** Lightweight frame-sampling pipeline tailored for seamless hosting on platforms like Render.
+- 💻 **Cross-Platform Script Support:** Includes standalone CLI tool scripts for detailed audio transcription (Whisper AI) and interactive video stream processing.
+
+---
+
+## 🔄 System Architecture
+
+```mermaid
+flowchart TD
+    A[User Uploads Video File] --> B[Flask Server / Route Handler]
+    B --> C[OpenCV Video Stream Processing]
+    C --> D[Haar Cascade Face Detection]
+    D --> E[Image Normalization 48x48 Grayscale]
+    E --> F[TensorFlow CNN Emotion Model]
+    F --> G[Emotion Classification & Frequency Counting]
+    B --> H[Audio Extraction & Sentiment Engine]
+    G --> I[Performance Scoring Engine]
+    H --> I
+    I --> J[Analytics Dashboard & History Store]
+```
+
+### Analytical Pipeline:
+1. **Video Ingestion:** Accepts uploaded MP4/AVI/MOV video files securely through Flask.
+2. **Frame Sampling:** Reads frames at regular intervals (1 frame/sec) using OpenCV to maximize speed and minimize compute overhead.
+3. **Face Extraction & Rescaling:** Identifies face regions, resizes them to `48x48` grayscale matrices, and normalizes pixel values to `[0, 1]`.
+4. **Deep Learning Inference:** Passes facial features through `emotion_model.h5` to classify expressions.
+5. **Speech & Sentiment Evaluation:** Inspects audio properties and extracts text sentiment via MoviePy & TextBlob.
+6. **Metric Aggregation:** Calculates confidence, stress, and final scores for rendering in the UI.
+
+---
+
+## 📊 Emotion Categories & Analytics Logic
+
+### Supported Emotion Classes
+The classification model identifies **7 facial expression states**:
+- 😊 **Happy**
+- 😐 **Neutral**
+- 😮 **Surprise**
+- 😔 **Sad**
+- 😡 **Angry**
+- 😨 **Fear**
+- 🤢 **Disgust**
+
+### Scoring Equations
+
+1. **Facial Confidence Index ($\text{Score}_{\text{Face}}$)**
+   $$\text{Confidence}_{\text{Face}} = \frac{\text{Count}(\text{Neutral}) + \text{Count}(\text{Happy})}{\text{Total Frames Detected}} \times 100$$
+   $$\text{Stress}_{\text{Face}} = \frac{\text{Count}(\text{Angry}) + \text{Count}(\text{Fear})}{\text{Total Frames Detected}} \times 100$$
+   $$\text{Face Score} = \text{Confidence}_{\text{Face}} - \text{Stress}_{\text{Face}}$$
+
+2. **Overall Performance Score ($\text{Final Score}$)**
+   $$\text{Final Score} = (\text{Face Score} \times 0.7) + (\text{Voice Confidence} \times 0.3)$$
+
+---
+
+## 🛠️ Technology Stack
+
+| Domain | Technologies / Libraries |
+| :--- | :--- |
+| **Primary Language** | Python 3.10+ |
+| **Web Framework** | Flask, Jinja2, HTML5, Vanilla CSS |
+| **Computer Vision** | OpenCV (`opencv-python-headless`) |
+| **AI / Machine Learning** | TensorFlow 2.15.0, Keras 2.15.0, Scikit-learn, NumPy 1.26.4 |
+| **Audio & NLP** | MoviePy, TextBlob, OpenAI Whisper (standalone), ImageIO-FFmpeg |
+| **WSGI / Web Server** | Gunicorn |
+| **Cloud Hosting** | Render |
+
+---
+
+## 📁 Project Directory Structure
+
+```text
 Smart-Anchor-Analyzer/
-│
-├── app.py
-├── emotion_model.h5
-├── requirements.txt
-├── runtime.txt
-├── Procfile
-├── uploads/
-├── static/
-├── templates/
-│   ├── home.html
-│   ├── analyze.html
-│   ├── analytics.html
-│   └── history.html
-├── dataset/
-├── render.yaml
-└── README.md
+├── app.py                      # Core Flask Application & Web Routes
+├── smart_anchor_analyzer.py    # CLI-based Multi-modal Analysis Script (Face + Voice + Whisper)
+├── emotion_analyzer.py        # Real-time Video/Webcam OpenCV Stream Analyzer
+├── voice_analyzer.py          # Standalone Audio & Speech Sentiment Analyzer
+├── train_emotion_model.py     # Deep Learning Model Training Script
+├── predict_emotion.py         # Single Image Inference Testing Script
+├── emotion_model.h5           # Pre-trained TensorFlow/Keras Emotion CNN Model
+├── requirements.txt           # Python Project Dependencies
+├── runtime.txt                # Python Runtime Specification for Production
+├── Procfile                   # Process File for Gunicorn / Render Deployment
+├── render.yaml                # Infrastructure-as-Code Configuration for Render
+├── dataset/                   # Dataset Directory for Model Training
+├── uploads/                   # Temporary Directory for Video Uploads
+├── static/                    # Custom CSS, JavaScript & Static Assets
+└── templates/                 # HTML Templates
+    ├── home.html              # Landing Page
+    ├── analyze.html           # Video Upload & Processing Interface
+    ├── analytics.html         # Detailed Emotion & Performance Analytics Dashboard
+    └── history.html           # Processing History Log
 ```
 
 ---
 
-## How the System Works
+## 💻 Installation & Setup
 
-1. User uploads a video file through the web interface.
-2. The system processes video frames using OpenCV.
-3. Faces are detected from extracted frames.
-4. Facial images are preprocessed and resized.
-5. Deep Learning model predicts emotions from facial expressions.
-6. Emotion statistics are generated.
-7. Confidence and stress levels are calculated.
-8. Final analytics and prediction scores are displayed.
+### Prerequisites
+- Python **3.9+** or **3.10+**
+- `pip` package manager
+- Git
 
----
-
-## Emotion Categories
-
-The system can identify emotions such as:
-
-- Happy
-- Sad
-- Angry
-- Neutral
-- Fear
-- Surprise
-- Disgust
-
----
-
-## Machine Learning Workflow
-
-### Data Collection
-- Facial emotion datasets were collected for training and testing.
-
-### Data Preprocessing
-- Frame extraction
-- Face detection
-- Image resizing
-- Grayscale conversion
-- Normalization
-
-### Model Training
-- Deep Learning emotion classification model was trained using TensorFlow and Keras.
-
-### Model Evaluation
-- Prediction accuracy analysis
-- Emotion classification validation
-- Performance testing
-
-### Deployment
-- Flask application deployed publicly using Render cloud platform.
-
----
-
-## Installation
-
-### Clone Repository
-
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/PravalikaMoraboyina123/Smart-Anchor-Analyzer.git
-```
-
-### Navigate to Project Directory
-
-```bash
 cd Smart-Anchor-Analyzer
 ```
 
-### Create Virtual Environment
+### 2. Set Up a Virtual Environment
 
-#### Windows
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### Linux / Mac
-
+**On Linux / macOS:**
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Install Dependencies
+**On Windows (Command Prompt / PowerShell):**
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
 
+### 3. Install Dependencies
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
 ---
 
-## Run the Application
+## 🏃 Usage Guide
 
-### Using Flask
-
+### Running the Web Application Locally
+Start the Flask development server:
 ```bash
 python app.py
 ```
-
-### Production Deployment
-
-```bash
-gunicorn --workers 1 --timeout 120 app:app
+Open your browser and navigate to:
+```text
+http://127.0.0.1:5000/
 ```
 
----
+### Running Standalone CLI Tools
 
-## Deployment
-
-The project is deployed publicly using Render.
-
-### Deployment Platform
-- Render Cloud Platform
-
-### Deployment Features
-- Public hosting
-- Automatic GitHub deployment
-- Cloud-based execution
-- Production-ready Flask setup
-- Gunicorn production server integration
-
----
-
-## Dashboard Features
-
-- Emotion analytics
-- Confidence score display
-- Stress level analysis
-- Video processing system
-- Prediction history
-- Interactive result visualization
+- **Comprehensive Multi-Modal Analyzer (Face + Audio + Whisper):**
+  ```bash
+  python smart_anchor_analyzer.py
+  ```
+- **Real-Time Webcam / Video Stream Emotion Analyzer:**
+  ```bash
+  python emotion_analyzer.py
+  ```
+- **Voice Sentiment & Filler Word Counter:**
+  ```bash
+  python voice_analyzer.py
+  ```
 
 ---
 
-## User Interface
+## ☁️ Deployment Configuration
 
-The application includes:
-- Responsive web interface
-- Clean dashboard layout
-- Upload-based workflow
-- Analytics visualization
-- Modern Flask frontend design
+The repository includes production configuration for hosting on **Render** or similar cloud platforms:
 
----
-
-## Optimization & Deployment Improvements
-
-The application was optimized for cloud deployment by:
-- Reducing memory usage
-- Using lightweight processing methods
-- Optimizing TensorFlow loading
-- Configuring Render-compatible deployment
-- Adding Gunicorn support
-- Using OpenCV headless version for servers
-- Dynamic PORT binding for Render deployment
+- **Procfile:**
+  ```text
+  web: gunicorn --workers 1 --timeout 120 app:app
+  ```
+- **Port Binding:** `app.py` automatically binds to `os.environ.get("PORT", 5000)`.
+- **Headless OpenCV:** Utilizes `opencv-python-headless` in `requirements.txt` to enable server execution without X11 window dependencies.
 
 ---
 
-## Future Enhancements
+## ⚡ Performance & Cloud Optimizations
 
-- Real-time webcam emotion detection
-- Speech and voice emotion analysis
-- Advanced analytics dashboard
-- Multi-face emotion detection
-- Deep Learning model improvements
-- Cloud storage integration
-- User authentication system
-- AI-powered presentation feedback
-
-## Author
-
-Pravalika Moraboyina
-
-B.Tech - Computer Science & Engineering (Data Science)
-
-Rajeev Gandhi Memorial College of Engineering & Technology
-
-GitHub: https://github.com/PravalikaMoraboyina123
-
-Website: https://smart-anchor-analyzer.onrender.com/
-
-Email: pravalikamoraboyina123@gmail.com
+To ensure high responsiveness and fit free-tier memory constraints on cloud servers:
+1. **Dynamic Model Loading:** The Keras model loads on demand during processing rather than blocking initial server startup.
+2. **Interval Frame Sampling:** Evaluates keyframes per second instead of processing every single frame, reducing execution time by up to 90%.
+3. **Headless Vision Stack:** Eliminates GUI library overhead for server environments.
 
 ---
 
-## License
+## 🔮 Future Roadmap
 
-This project is developed for educational and learning purposes.
+- [ ] **Real-time WebRTC Streaming:** Enable live video analysis directly from browser webcams.
+- [ ] **Advanced Audio Transcription:** Full integration of server-side Whisper AI for pitch and filler word heatmaps.
+- [ ] **Multi-Speaker Detection:** Track and differentiate expressions across multiple people in frame.
+- [ ] **PDF Report Export:** Download comprehensive performance feedback reports as PDF documents.
+
+---
+
+## 👩‍💻 Author & Contact
+
+**Pravalika Moraboyina**  
+*B.Tech in Computer Science & Engineering (Data Science)*  
+Rajeev Gandhi Memorial College of Engineering & Technology  
+
+- **GitHub:** [@PravalikaMoraboyina123](https://github.com/PravalikaMoraboyina123)
+- **Live Demo:** [smart-anchor-analyzer.onrender.com](https://smart-anchor-analyzer.onrender.com/)
+- **Email:** [pravalikamoraboyina123@gmail.com](mailto:pravalikamoraboyina123@gmail.com)
+
+---
+
+## 📜 License
+
+This project is open-source and available for educational, academic, and research purposes.
+
