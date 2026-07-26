@@ -1,8 +1,6 @@
 import os
 import cv2
 import numpy as np
-from tensorflow.keras.models import load_model
-from tensorflow.keras import layers, models
 from collections import Counter
 
 try:
@@ -26,26 +24,49 @@ except Exception:
 # LOAD EMOTION MODEL
 # ===============================
 print("Loading emotion model...")
-model_file = "emotion_model.keras" if os.path.exists("emotion_model.keras") else "emotion_model.h5"
-try:
-    emotion_model = load_model(model_file, compile=False)
-except Exception:
-    m = models.Sequential([
-        layers.Input(shape=(48, 48, 1)),
-        layers.Conv2D(32, (3, 3), activation='relu'),
-        layers.MaxPooling2D(2, 2),
-        layers.Conv2D(64, (3, 3), activation='relu'),
-        layers.MaxPooling2D(2, 2),
-        layers.Conv2D(128, (3, 3), activation='relu'),
-        layers.MaxPooling2D(2, 2),
-        layers.Flatten(),
-        layers.Dense(128, activation='relu'),
-        layers.Dropout(0.5),
-        layers.Dense(7, activation='softmax')
-    ])
-    weights_file = "emotion_model.h5" if os.path.exists("emotion_model.h5") else "emotion_model.keras"
-    m.load_weights(weights_file)
-    emotion_model = m
+
+class EmotionModelWrapper:
+    def __init__(self, net):
+        self.net = net
+
+    def predict(self, face, verbose=0):
+        self.net.setInput(face)
+        return self.net.forward()
+
+emotion_model = None
+if os.path.exists("emotion_model.onnx"):
+    try:
+        net = cv2.dnn.readNetFromONNX("emotion_model.onnx")
+        emotion_model = EmotionModelWrapper(net)
+    except Exception as e:
+        print("OpenCV DNN load failed:", e)
+
+if emotion_model is None:
+    try:
+        from tensorflow.keras.models import load_model
+        from tensorflow.keras import layers, models
+        model_file = "emotion_model.keras" if os.path.exists("emotion_model.keras") else "emotion_model.h5"
+        try:
+            emotion_model = load_model(model_file, compile=False)
+        except Exception:
+            m = models.Sequential([
+                layers.Input(shape=(48, 48, 1)),
+                layers.Conv2D(32, (3, 3), activation='relu'),
+                layers.MaxPooling2D(2, 2),
+                layers.Conv2D(64, (3, 3), activation='relu'),
+                layers.MaxPooling2D(2, 2),
+                layers.Conv2D(128, (3, 3), activation='relu'),
+                layers.MaxPooling2D(2, 2),
+                layers.Flatten(),
+                layers.Dense(128, activation='relu'),
+                layers.Dropout(0.5),
+                layers.Dense(7, activation='softmax')
+            ])
+            weights_file = "emotion_model.h5" if os.path.exists("emotion_model.h5") else "emotion_model.keras"
+            m.load_weights(weights_file)
+            emotion_model = m
+    except Exception as err:
+        print("Keras model load failed:", err)
 
 
 emotion_labels = ['angry', 'disgust', 'fear',

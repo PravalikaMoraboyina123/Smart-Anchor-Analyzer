@@ -2,8 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for
 import os
 import cv2
 import numpy as np
-from tensorflow.keras.models import load_model
-from tensorflow.keras import layers, models
 from collections import Counter
 
 try:
@@ -54,33 +52,56 @@ face_cascade = cv2.CascadeClassifier(
 
 # ---------------- GLOBAL MODEL CACHE ----------------
 
+class EmotionModelWrapper:
+    def __init__(self, net):
+        self.net = net
+
+    def predict(self, face, verbose=0):
+        self.net.setInput(face)
+        return self.net.forward()
+
 emotion_model = None
 
 def get_emotion_model():
     global emotion_model
     if emotion_model is None:
-        model_file = "emotion_model.keras" if os.path.exists("emotion_model.keras") else "emotion_model.h5"
+        onnx_file = "emotion_model.onnx"
+        if os.path.exists(onnx_file):
+            try:
+                print("Loading emotion model via OpenCV DNN (ONNX)...")
+                net = cv2.dnn.readNetFromONNX(onnx_file)
+                emotion_model = EmotionModelWrapper(net)
+                return emotion_model
+            except Exception as e:
+                print("OpenCV DNN load warning:", e)
+
+        # Fallback to Keras load_model
         try:
-            emotion_model = load_model(model_file, compile=False)
+            from tensorflow.keras.models import load_model
+            from tensorflow.keras import layers, models
+            model_file = "emotion_model.keras" if os.path.exists("emotion_model.keras") else "emotion_model.h5"
+            try:
+                emotion_model = load_model(model_file, compile=False)
+            except Exception as err:
+                print("Model load warning, reconstructing model architecture:", err)
+                m = models.Sequential([
+                    layers.Input(shape=(48, 48, 1)),
+                    layers.Conv2D(32, (3, 3), activation='relu'),
+                    layers.MaxPooling2D(2, 2),
+                    layers.Conv2D(64, (3, 3), activation='relu'),
+                    layers.MaxPooling2D(2, 2),
+                    layers.Conv2D(128, (3, 3), activation='relu'),
+                    layers.MaxPooling2D(2, 2),
+                    layers.Flatten(),
+                    layers.Dense(128, activation='relu'),
+                    layers.Dropout(0.5),
+                    layers.Dense(7, activation='softmax')
+                ])
+                weights_file = "emotion_model.h5" if os.path.exists("emotion_model.h5") else "emotion_model.keras"
+                m.load_weights(weights_file)
+                emotion_model = m
         except Exception as err:
-            print("Model load warning, reconstructing model architecture:", err)
-            # Reconstruct architecture and load weights for legacy compatibility
-            m = models.Sequential([
-                layers.Input(shape=(48, 48, 1)),
-                layers.Conv2D(32, (3, 3), activation='relu'),
-                layers.MaxPooling2D(2, 2),
-                layers.Conv2D(64, (3, 3), activation='relu'),
-                layers.MaxPooling2D(2, 2),
-                layers.Conv2D(128, (3, 3), activation='relu'),
-                layers.MaxPooling2D(2, 2),
-                layers.Flatten(),
-                layers.Dense(128, activation='relu'),
-                layers.Dropout(0.5),
-                layers.Dense(7, activation='softmax')
-            ])
-            weights_file = "emotion_model.h5" if os.path.exists("emotion_model.h5") else "emotion_model.keras"
-            m.load_weights(weights_file)
-            emotion_model = m
+            print("Keras load error:", err)
     return emotion_model
 
 
