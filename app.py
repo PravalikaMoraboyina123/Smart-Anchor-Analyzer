@@ -326,13 +326,18 @@ def process():
 
 @app.route('/analytics')
 def analytics():
-
-    if not latest_result:
-        return redirect(url_for('analyze_page'))
+    data = latest_result if latest_result else {
+        "face_score": 0.0,
+        "voice_conf": 0.0,
+        "sentiment": 0.0,
+        "final_score": 0.0,
+        "transcript": "No video analyzed yet.",
+        "emotions": {"neutral": 0, "happy": 0, "angry": 0, "sad": 0, "fear": 0, "disgust": 0, "surprise": 0}
+    }
 
     return render_template(
         "analytics.html",
-        data=latest_result
+        data=data
     )
 
 # ---------------- HISTORY PAGE ----------------

@@ -8,6 +8,10 @@
     <p><strong>Video:</strong> {{ item.video }}</p>
     <p><strong>Score:</strong> {{ item.score }}</p>
 </div>
+{% else %}
+<div class="card">
+    <p>No analysis history available yet. <a href="/analyze" style="color: #00E5FF;">Upload a video</a> to start analysis!</p>
+</div>
 {% endfor %}
 
 {% endblock %}
