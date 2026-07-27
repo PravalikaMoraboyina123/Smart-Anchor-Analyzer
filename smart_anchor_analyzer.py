@@ -104,13 +104,20 @@ while True:
         break
 
     if frame_count % frame_interval == 0:
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        h, w = frame.shape[:2]
+        if w > 320:
+            scale = 320.0 / w
+            proc_frame = cv2.resize(frame, (320, max(1, int(h * scale))))
+        else:
+            proc_frame = frame
+
+        gray = cv2.cvtColor(proc_frame, cv2.COLOR_BGR2GRAY)
 
         faces = face_cascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
+            scaleFactor=1.2,
             minNeighbors=4,
-            minSize=(30, 30)
+            minSize=(20, 20)
         )
 
         for (x, y, w, h) in faces:

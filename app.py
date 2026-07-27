@@ -1,3 +1,4 @@
+import gc
 from flask import Flask, render_template, request, redirect, url_for
 import os
 import cv2
@@ -19,6 +20,7 @@ app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max 50MB upload
 
 # Create uploads folder
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -146,65 +148,98 @@ def process():
 
     file.save(filepath)
 
+    cap = None
     try:
-        # Load model instance (cached)
+        # ---------------- VIDEO DURATION & INITIALIZATION ----------------
+        cap = cv2.VideoCapture(filepath)
+        if not cap.isOpened():
+            return render_template(
+                "analyze.html",
+                error="Unable to open uploaded video file. Please upload a valid video format."
+            )
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if not fps or fps <= 0 or np.isnan(fps):
+            fps = 25.0
+
+        total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        duration = (total_frames / fps) if (total_frames and total_frames > 0) else 0.0
+
+        # Reject videos longer than 30 seconds
+        if duration > 30.0:
+            cap.release()
+            cap = None
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return render_template(
+                "analyze.html",
+                error=f"Video duration exceeds maximum limit of 30 seconds (uploaded: {duration:.1f}s). Please upload a video shorter than 30 seconds."
+            )
+
+        # Load emotion model (cached)
         model = get_emotion_model()
 
-        # ---------------- FACE ANALYSIS ----------------
-        cap = cv2.VideoCapture(filepath)
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
-        if fps <= 0:
-            fps = 1
+        # ---------------- FACE ANALYSIS (OPTIMIZED FOR RENDER) ----------------
+        # Process 1 frame every 2.5 seconds, max 12 frames
+        frame_interval = max(1, int(fps * 2.5))
+        MAX_FRAMES_TO_PROCESS = 12
 
-        frame_interval = fps
         emotion_counts = []
-        frame_count = 0
+        curr_frame_idx = 0
         processed_frames = 0
-        MAX_FRAMES_TO_PROCESS = 30  # Cap processing to 30 frames max (1 frame/sec) for cloud speed
 
-        while True:
-            ret, frame = cap.read()
-            if not ret or processed_frames >= MAX_FRAMES_TO_PROCESS or frame_count > (MAX_FRAMES_TO_PROCESS * fps):
+        while processed_frames < MAX_FRAMES_TO_PROCESS:
+            if total_frames > 0 and curr_frame_idx >= total_frames:
                 break
 
-            if frame_count % frame_interval == 0:
-                try:
-                    # Downscale large frames to 480px width for 8x faster face detection
-                    h, w = frame.shape[:2]
-                    if w > 480:
-                        scale = 480.0 / w
-                        proc_frame = cv2.resize(frame, (480, int(h * scale)))
-                    else:
-                        proc_frame = frame
+            if curr_frame_idx > 0:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, curr_frame_idx)
 
-                    gray = cv2.cvtColor(proc_frame, cv2.COLOR_BGR2GRAY)
-                    faces = face_cascade.detectMultiScale(
-                        gray,
-                        scaleFactor=1.1,
-                        minNeighbors=4,
-                        minSize=(30, 30)
-                    )
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-                    for (x, y, w_box, h_box) in faces:
-                        face = gray[y:y+h_box, x:x+w_box]
-                        try:
-                            face = cv2.resize(face, (48, 48))
-                            face = face / 255.0
-                            face = np.reshape(face, (1, 48, 48, 1))
+            try:
+                # Downscale frame to max width 320 px for low memory & fast face detection
+                h, w = frame.shape[:2]
+                if w > 320:
+                    scale = 320.0 / w
+                    proc_frame = cv2.resize(frame, (320, max(1, int(h * scale))))
+                else:
+                    proc_frame = frame
 
-                            prediction = model.predict(face, verbose=0)
-                            emotion = emotion_labels[np.argmax(prediction)]
-                            emotion_counts.append(emotion)
-                        except Exception:
-                            continue
-                except Exception:
-                    pass
+                gray = cv2.cvtColor(proc_frame, cv2.COLOR_BGR2GRAY)
+                faces = face_cascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.2,
+                    minNeighbors=4,
+                    minSize=(20, 20)
+                )
 
-                processed_frames += 1
+                for (x, y, w_box, h_box) in faces:
+                    face = gray[y:y+h_box, x:x+w_box]
+                    try:
+                        face = cv2.resize(face, (48, 48))
+                        face = face / 255.0
+                        face = np.reshape(face, (1, 48, 48, 1))
 
-            frame_count += 1
+                        prediction = model.predict(face, verbose=0)
+                        emotion = emotion_labels[np.argmax(prediction)]
+                        emotion_counts.append(emotion)
+                    except Exception:
+                        continue
+            except Exception:
+                pass
 
+            processed_frames += 1
+            curr_frame_idx += frame_interval
+
+        # Release VideoCapture resource immediately after processing loop
         cap.release()
+        cap = None
+
+        # Force garbage collection
+        gc.collect()
 
         # ---------------- EMOTION RESULTS ----------------
         emotion_counter = Counter(emotion_counts)
@@ -230,12 +265,11 @@ def process():
         voice_conf = 80
 
         try:
-            clip = VideoFileClip(filepath)
-            if clip.audio is not None:
-                transcript_text = "Audio detected successfully."
-                sentiment = 0.5
-                voice_conf = 85
-            clip.close()
+            with VideoFileClip(filepath) as clip:
+                if clip.audio is not None:
+                    transcript_text = "Audio detected successfully."
+                    sentiment = 0.5
+                    voice_conf = 85
         except Exception as e:
             print("Audio processing note:", e)
 
@@ -270,12 +304,18 @@ def process():
         )
 
     finally:
+        if cap is not None:
+            try:
+                cap.release()
+            except Exception:
+                pass
         # Clean up temporary uploaded file to prevent disk exhaustion
         if os.path.exists(filepath):
             try:
                 os.remove(filepath)
             except Exception:
                 pass
+        gc.collect()
 
 
 # ---------------- ANALYTICS PAGE ----------------
