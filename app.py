@@ -347,6 +347,10 @@ def history():
 
 # ---------------- ERROR HANDLERS ----------------
 
+@app.errorhandler(413)
+def request_entity_too_large(e):
+    return render_template('analyze.html', error="Uploaded video file size is too large (max 25MB). Please compress your video or upload a file under 25MB."), 413
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('analyze.html', error="Requested page not found. Please upload a video to start analysis."), 404

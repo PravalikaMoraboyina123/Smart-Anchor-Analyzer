@@ -41,7 +41,16 @@
 {% endif %}
 
 <script>
-document.getElementById("analysisForm").addEventListener("submit", function() {
+document.getElementById("analysisForm").addEventListener("submit", function(e) {
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        const fileMB = fileInput.files[0].size / (1024 * 1024);
+        if (fileMB > 25) {
+            e.preventDefault();
+            alert("The selected video file is " + fileMB.toFixed(1) + " MB. Please upload a compressed video under 25 MB for fast cloud processing.");
+            return false;
+        }
+    }
     document.getElementById("loadingSection").style.display = "block";
 });
 </script>
