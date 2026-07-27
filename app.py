@@ -165,24 +165,28 @@ def process():
         total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         duration = (total_frames / fps) if (total_frames and total_frames > 0) else 0.0
 
-        # Reject videos longer than 30 seconds
-        if duration > 30.0:
+        # Allow videos up to 60 seconds (1 minute)
+        if duration > 60.0:
             cap.release()
             cap = None
             if os.path.exists(filepath):
                 os.remove(filepath)
             return render_template(
                 "analyze.html",
-                error=f"Video duration exceeds maximum limit of 30 seconds (uploaded: {duration:.1f}s). Please upload a video shorter than 30 seconds."
+                error=f"Video duration exceeds maximum limit of 60 seconds (uploaded: {duration:.1f}s). Please upload a video shorter than 60 seconds."
             )
 
         # Load emotion model (cached)
         model = get_emotion_model()
 
         # ---------------- FACE ANALYSIS (OPTIMIZED FOR RENDER) ----------------
-        # Process 1 frame every 2.5 seconds, max 12 frames
-        frame_interval = max(1, int(fps * 2.5))
-        MAX_FRAMES_TO_PROCESS = 12
+        # Dynamic sampling: sample 15 frames max evenly spread across the video
+        MAX_FRAMES_TO_PROCESS = 15
+        if duration > 0:
+            interval_sec = max(1.5, duration / MAX_FRAMES_TO_PROCESS)
+        else:
+            interval_sec = 2.5
+        frame_interval = max(1, int(fps * interval_sec))
 
         emotion_counts = []
         curr_frame_idx = 0
