@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max 50MB upload
+app.config['MAX_CONTENT_LENGTH'] = 60 * 1024 * 1024  # Max 60MB upload
 
 # Create uploads folder
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -180,8 +180,8 @@ def process():
         model = get_emotion_model()
 
         # ---------------- FACE ANALYSIS (OPTIMIZED FOR RENDER LOW CPU) ----------------
-        # Dynamic sampling: sample 6 frames max evenly spread across the video for sub-3s response
-        MAX_FRAMES_TO_PROCESS = 6
+        # Dynamic sampling: sample 5 frames max evenly spread across the video for sub-1s execution
+        MAX_FRAMES_TO_PROCESS = 5
         if duration > 0:
             interval_sec = max(2.0, duration / MAX_FRAMES_TO_PROCESS)
         else:
@@ -204,20 +204,20 @@ def process():
                 break
 
             try:
-                # Downscale frame to max width 240 px for ultra-low memory & fast face detection
+                # Downscale frame to max width 200 px for ultra-fast face detection
                 h, w = frame.shape[:2]
-                if w > 240:
-                    scale = 240.0 / w
-                    proc_frame = cv2.resize(frame, (240, max(1, int(h * scale))))
+                if w > 200:
+                    scale = 200.0 / w
+                    proc_frame = cv2.resize(frame, (200, max(1, int(h * scale))))
                 else:
                     proc_frame = frame
 
                 gray = cv2.cvtColor(proc_frame, cv2.COLOR_BGR2GRAY)
                 faces = face_cascade.detectMultiScale(
                     gray,
-                    scaleFactor=1.3,
-                    minNeighbors=4,
-                    minSize=(18, 18)
+                    scaleFactor=1.35,
+                    minNeighbors=3,
+                    minSize=(16, 16)
                 )
 
                 for (x, y, w_box, h_box) in faces:
@@ -349,7 +349,7 @@ def history():
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
-    return render_template('analyze.html', error="Uploaded video file size is too large (max 25MB). Please compress your video or upload a file under 25MB."), 413
+    return render_template('analyze.html', error="Uploaded video file size is too large (max 60MB). Please upload a file under 60MB."), 413
 
 @app.errorhandler(404)
 def page_not_found(e):
