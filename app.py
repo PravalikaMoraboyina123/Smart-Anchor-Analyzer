@@ -179,13 +179,13 @@ def process():
         # Load emotion model (cached)
         model = get_emotion_model()
 
-        # ---------------- FACE ANALYSIS (OPTIMIZED FOR RENDER) ----------------
-        # Dynamic sampling: sample 15 frames max evenly spread across the video
-        MAX_FRAMES_TO_PROCESS = 15
+        # ---------------- FACE ANALYSIS (OPTIMIZED FOR RENDER LOW CPU) ----------------
+        # Dynamic sampling: sample 6 frames max evenly spread across the video for sub-3s response
+        MAX_FRAMES_TO_PROCESS = 6
         if duration > 0:
-            interval_sec = max(1.5, duration / MAX_FRAMES_TO_PROCESS)
+            interval_sec = max(2.0, duration / MAX_FRAMES_TO_PROCESS)
         else:
-            interval_sec = 2.5
+            interval_sec = 3.0
         frame_interval = max(1, int(fps * interval_sec))
 
         emotion_counts = []
@@ -204,20 +204,20 @@ def process():
                 break
 
             try:
-                # Downscale frame to max width 320 px for low memory & fast face detection
+                # Downscale frame to max width 240 px for ultra-low memory & fast face detection
                 h, w = frame.shape[:2]
-                if w > 320:
-                    scale = 320.0 / w
-                    proc_frame = cv2.resize(frame, (320, max(1, int(h * scale))))
+                if w > 240:
+                    scale = 240.0 / w
+                    proc_frame = cv2.resize(frame, (240, max(1, int(h * scale))))
                 else:
                     proc_frame = frame
 
                 gray = cv2.cvtColor(proc_frame, cv2.COLOR_BGR2GRAY)
                 faces = face_cascade.detectMultiScale(
                     gray,
-                    scaleFactor=1.2,
+                    scaleFactor=1.3,
                     minNeighbors=4,
-                    minSize=(20, 20)
+                    minSize=(18, 18)
                 )
 
                 for (x, y, w_box, h_box) in faces:
